@@ -2,7 +2,7 @@
 
 A bloatware-free, offline chromatic tuner for Android supporting **Guitar** and **Ukulele**. No ads, no tracking, no internet permission. Pure pitch detection from the microphone.
 
-<img width="1080" height="2292" alt="screen" src="https://github.com/user-attachments/assets/9646ba5c-1b27-4984-9758-1442e1fbd726" />
+<img width="400" alt="screen" src="https://github.com/user-attachments/assets/9646ba5c-1b27-4984-9758-1442e1fbd726" />
 
 ---
 
