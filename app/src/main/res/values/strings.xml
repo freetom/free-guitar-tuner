@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Tuner</string>
+    <string name="settings_title">Settings</string>
+    <string name="instrument_label">Instrument:</string>
+    <string name="tuning_label">Tuning:</string>
+    <string name="signal_label">Signal</string>
+    <string name="reference_hz">A4 = %d Hz</string>
+    <string name="frequency_hz">%.1f Hz</string>
+    <string name="mic_permission_denied">Microphone permission is required to detect pitch.</string>
+
+    <!-- Settings -->
+    <string name="pref_reference_hz_title">Reference Pitch (A4)</string>
+    <string name="pref_reference_hz_desc">Set the reference frequency for A4 (default: 440 Hz). Valid range: 400–480 Hz.</string>
+    <string name="reference_summary">Currently %d Hz</string>
+    <string name="reference_invalid">Enter a value between 400 and 480 Hz</string>
+</resources>

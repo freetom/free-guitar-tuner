@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bg_dark">#0F0F1A</color>
+    <color name="surface">#1A1A2E</color>
+    <color name="accent">#7C6EFF</color>
+    <color name="green">#4CAF50</color>
+    <color name="flat_blue">#2196F3</color>
+    <color name="sharp_red">#F44336</color>
+    <color name="text_primary">#EEEEFF</color>
+    <color name="text_secondary">#AAAACC</color>
+    <color name="text_hint">#666688</color>
+    <color name="string_active">#7C6EFF</color>
+    <color name="string_inactive">#333355</color>
+</resources>

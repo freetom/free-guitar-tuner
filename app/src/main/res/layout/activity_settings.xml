@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/bg_dark"
+    android:fitsSystemWindows="true">
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/surface"
+        android:elevation="4dp"
+        app:titleTextColor="@color/text_primary"
+        app:title="@string/settings_title" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/pref_reference_hz_title"
+            android:textColor="@color/text_primary"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="4dp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/pref_reference_hz_desc"
+            android:textColor="@color/text_secondary"
+            android:textSize="13sp"
+            android:layout_marginBottom="24dp"/>
+
+        <!-- Large Hz display -->
+        <TextView
+            android:id="@+id/tv_hz_value"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textColor="@color/accent"
+            android:textSize="56sp"
+            android:textStyle="bold"
+            android:fontFamily="monospace"
+            android:layout_marginBottom="8dp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="Hz  (A4)"
+            android:textColor="@color/text_secondary"
+            android:textSize="18sp"
+            android:layout_marginBottom="24dp"/>
+
+        <!-- SeekBar: range 400–480 Hz -->
+        <SeekBar
+            android:id="@+id/seekbar_hz"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:max="80"
+            android:progress="40"
+            android:progressTint="@color/accent"
+            android:thumbTint="@color/accent"
+            android:layout_marginBottom="8dp"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="400 Hz"
+                android:textColor="@color/text_hint"
+                android:textSize="12sp"/>
+            <View android:layout_width="0dp" android:layout_height="1dp" android:layout_weight="1"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="440 Hz"
+                android:textColor="@color/text_hint"
+                android:textSize="12sp"/>
+            <View android:layout_width="0dp" android:layout_height="1dp" android:layout_weight="1"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="480 Hz"
+                android:textColor="@color/text_hint"
+                android:textSize="12sp"/>
+        </LinearLayout>
+
+        <!-- Fine-tune buttons -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginTop="32dp">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_minus"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:text="−"
+                android:textSize="28sp"
+                app:backgroundTint="@color/surface"
+                android:textColor="@color/text_primary"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                app:strokeColor="@color/accent"
+                android:layout_marginEnd="24dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_reset"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Reset to 440"
+                app:backgroundTint="@color/surface"
+                android:textColor="@color/accent"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                app:strokeColor="@color/accent"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_plus"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:text="+"
+                android:textSize="28sp"
+                app:backgroundTint="@color/surface"
+                android:textColor="@color/text_primary"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                app:strokeColor="@color/accent"
+                android:layout_marginStart="24dp"/>
+        </LinearLayout>
+
+        <!-- Common presets -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Common presets"
+            android:textColor="@color/text_secondary"
+            android:textSize="13sp"
+            android:layout_marginTop="32dp"
+            android:layout_marginBottom="12dp"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_432"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="432 Hz"
+                app:backgroundTint="@color/surface"
+                android:textColor="@color/text_primary"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                app:strokeColor="@color/string_inactive"
+                android:layout_marginEnd="8dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_440"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="440 Hz"
+                app:backgroundTint="@color/surface"
+                android:textColor="@color/text_primary"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                app:strokeColor="@color/string_inactive"
+                android:layout_marginEnd="8dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_442"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="442 Hz"
+                app:backgroundTint="@color/surface"
+                android:textColor="@color/text_primary"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                app:strokeColor="@color/string_inactive"
+                android:layout_marginEnd="8dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_444"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="444 Hz"
+                app:backgroundTint="@color/surface"
+                android:textColor="@color/text_primary"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                app:strokeColor="@color/string_inactive"/>
+        </LinearLayout>
+
+    </LinearLayout>
+
+</LinearLayout>

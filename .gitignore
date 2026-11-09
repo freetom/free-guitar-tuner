@@ -1,0 +1,25 @@
+# Gradle
+.gradle/
+build/
+app/build/intermediates/
+app/build/generated/
+app/build/kotlin/
+app/build/outputs/logs/
+app/build/outputs/mapping/
+app/build/tmp/
+
+# Keep the debug APK
+!app/build/outputs/apk/debug/app-debug.apk
+
+# Local config — never commit
+local.properties
+
+# IDE
+.idea/
+*.iml
+*.iws
+*.ipr
+.DS_Store
+
+# GenCode session file
+session_gencode

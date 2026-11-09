@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Guitar tuner fork icon -->
+    <path
+        android:fillColor="#7C6EFF"
+        android:pathData="M54,20 C38,20 25,33 25,49 C25,60 31,70 41,75 L41,88 L67,88 L67,75 C77,70 83,60 83,49 C83,33 70,20 54,20Z"/>
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M50,45 L50,70 L58,70 L58,45 C62,43 65,39 65,35 C65,29 60,24 54,24 C48,24 43,29 43,35 C43,39 46,43 50,45Z"/>
+</vector>
