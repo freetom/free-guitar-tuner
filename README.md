@@ -124,4 +124,4 @@ No other permissions. No internet access. No analytics.
 
 ## License
 
-MIT
+GNU General Public License v2.0 — see [LICENSE](LICENSE) for details.
