@@ -10,6 +10,8 @@ A bloatware-free, offline chromatic tuner for Android supporting **Guitar** and 
 
 ### Tuner
 - Real-time pitch detection via the **YIN algorithm** (pure Kotlin, no native libs)
+- **Responsive**: ~43 readings per second; a new note is recognised in ~100 ms and the needle follows a peg turn closely
+- **Stable**: rejects noise and chords, holds the last pitch briefly when the signal drops out, and follows a decaying note
 - Analog-style **tuning meter** with color feedback:
   - Green — in tune (±5 cents)
   - Blue — flat
@@ -85,6 +87,10 @@ app/src/main/java/com/example/guitartuner/
 │   └── TuningMeterView.kt    — custom Canvas-drawn analog meter
 └── settings/
     └── SettingsActivity.kt   — reference pitch configuration
+
+app/src/test/java/com/example/guitartuner/audio/
+└── PitchTrackerTest.kt       — JVM tests on synthetic signals (accuracy, octave errors,
+                                lock-on and tracking latency, noise rejection, dropout hold)
 ```
 
 ### Requirements
@@ -98,13 +104,20 @@ app/src/main/java/com/example/guitartuner/
 ./gradlew assembleRelease      # release APK (requires signing config)
 ```
 
+Run the unit tests (JVM only, no device needed):
+```bash
+./gradlew testDebugUnitTest
+```
+The tests feed synthetic guitar/ukulele-like signals through the pitch pipeline and print
+measured latencies (lock-on time, settling time, glide-tracking error) with `-i`.
+
 Install on a connected device:
 ```bash
 adb install app/build/outputs/apk/debug/app-debug.apk
 ```
 
 ### Dependencies
-All AndroidX — no third-party audio or DSP libraries.
+All AndroidX (plus JUnit for tests) — no third-party audio or DSP libraries.
 
 | Library | Version | Purpose |
 |---|---|---|
@@ -113,8 +126,10 @@ All AndroidX — no third-party audio or DSP libraries.
 | material | 1.12.0 | Material Design components |
 | constraintlayout | 2.2.0 | Layout |
 | lifecycle-viewmodel-ktx | 2.8.7 | ViewModel + coroutines |
+| lifecycle-runtime-ktx | 2.8.7 | Lifecycle-aware coroutines |
 | activity-ktx | 1.9.3 | Activity result APIs |
 | fragment-ktx | 1.8.5 | Fragment support |
+| junit (test only) | 4.13.2 | Unit tests |
 
 ---
 
