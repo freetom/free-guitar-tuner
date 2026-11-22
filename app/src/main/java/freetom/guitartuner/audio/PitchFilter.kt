@@ -1,4 +1,4 @@
-package com.example.guitartuner.audio
+package freetom.guitartuner.audio
 
 import kotlin.math.abs
 import kotlin.math.exp

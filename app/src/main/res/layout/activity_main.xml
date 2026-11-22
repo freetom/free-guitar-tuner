@@ -110,7 +110,7 @@
         android:paddingBottom="4dp"/>
 
     <!-- Tuning meter -->
-    <com.example.guitartuner.ui.TuningMeterView
+    <freetom.guitartuner.ui.TuningMeterView
         android:id="@+id/tuning_meter"
         android:layout_width="match_parent"
         android:layout_height="0dp"

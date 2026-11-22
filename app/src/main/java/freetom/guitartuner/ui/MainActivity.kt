@@ -1,4 +1,4 @@
-package com.example.guitartuner.ui
+package freetom.guitartuner.ui
 
 import android.Manifest
 import android.content.Intent
@@ -17,11 +17,11 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import com.example.guitartuner.R
-import com.example.guitartuner.databinding.ActivityMainBinding
-import com.example.guitartuner.settings.SettingsActivity
-import com.example.guitartuner.tuning.Instrument
-import com.example.guitartuner.tuning.Tuning
+import freetom.guitartuner.R
+import freetom.guitartuner.databinding.ActivityMainBinding
+import freetom.guitartuner.settings.SettingsActivity
+import freetom.guitartuner.tuning.Instrument
+import freetom.guitartuner.tuning.Tuning
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 

@@ -1,10 +1,10 @@
-package com.example.guitartuner.settings
+package freetom.guitartuner.settings
 
 import android.os.Bundle
 import android.widget.SeekBar
 import androidx.appcompat.app.AppCompatActivity
 import android.preference.PreferenceManager
-import com.example.guitartuner.databinding.ActivitySettingsBinding
+import freetom.guitartuner.databinding.ActivitySettingsBinding
 
 class SettingsActivity : AppCompatActivity() {
 

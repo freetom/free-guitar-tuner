@@ -1,4 +1,4 @@
-package com.example.guitartuner.audio
+package freetom.guitartuner.audio
 
 import android.media.AudioFormat
 import android.media.AudioRecord

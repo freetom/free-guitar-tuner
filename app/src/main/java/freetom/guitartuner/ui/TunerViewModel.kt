@@ -1,14 +1,14 @@
-package com.example.guitartuner.ui
+package freetom.guitartuner.ui
 
 import android.app.Application
 import android.content.SharedPreferences
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import android.preference.PreferenceManager
-import com.example.guitartuner.audio.AudioRecorder
-import com.example.guitartuner.tuning.Instrument
-import com.example.guitartuner.tuning.Tuning
-import com.example.guitartuner.tuning.TuningAnalyzer
+import freetom.guitartuner.audio.AudioRecorder
+import freetom.guitartuner.tuning.Instrument
+import freetom.guitartuner.tuning.Tuning
+import freetom.guitartuner.tuning.TuningAnalyzer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest

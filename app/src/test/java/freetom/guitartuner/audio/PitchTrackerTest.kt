@@ -1,4 +1,4 @@
-package com.example.guitartuner.audio
+package freetom.guitartuner.audio
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue

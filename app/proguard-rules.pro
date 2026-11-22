@@ -1,1 +1,1 @@
--keep class com.example.guitartuner.** { *; }
+-keep class freetom.guitartuner.** { *; }

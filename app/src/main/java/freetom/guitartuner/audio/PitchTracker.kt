@@ -1,4 +1,4 @@
-package com.example.guitartuner.audio
+package freetom.guitartuner.audio
 
 /**
  * Turns a stream of PCM chunks into a stream of filtered pitch readings.

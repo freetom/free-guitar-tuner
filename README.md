@@ -72,7 +72,7 @@ A bloatware-free, offline chromatic tuner for Android supporting **Guitar** and 
 
 ### Architecture
 ```
-app/src/main/java/com/example/guitartuner/
+app/src/main/java/freetom/guitartuner/
 ├── audio/
 │   ├── AudioRecorder.kt      — microphone capture (Android I/O only)
 │   ├── PitchTracker.kt       — sliding window, gates, clarity, dropout hold
@@ -88,7 +88,7 @@ app/src/main/java/com/example/guitartuner/
 └── settings/
     └── SettingsActivity.kt   — reference pitch configuration
 
-app/src/test/java/com/example/guitartuner/audio/
+app/src/test/java/freetom/guitartuner/audio/
 └── PitchTrackerTest.kt       — JVM tests on synthetic signals (accuracy, octave errors,
                                 lock-on and tracking latency, noise rejection, dropout hold)
 ```

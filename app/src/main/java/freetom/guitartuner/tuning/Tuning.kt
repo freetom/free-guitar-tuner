@@ -1,4 +1,4 @@
-package com.example.guitartuner.tuning
+package freetom.guitartuner.tuning
 
 /**
  * A tuning is a named set of string targets.

@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.guitartuner"
+    namespace = "freetom.guitartuner"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.guitartuner"
+        applicationId = "freetom.guitartuner"
         minSdk = 26
         targetSdk = 35
         versionCode = 1

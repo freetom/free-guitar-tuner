@@ -1,4 +1,4 @@
-package com.example.guitartuner.ui
+package freetom.guitartuner.ui
 
 import android.content.Context
 import android.graphics.*

@@ -1,4 +1,4 @@
-package com.example.guitartuner.tuning
+package freetom.guitartuner.tuning
 
 import kotlin.math.abs
 import kotlin.math.log2
