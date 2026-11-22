@@ -13,8 +13,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import kotlin.math.abs
-import kotlin.math.log2
 
 class TunerViewModel(app: Application) : AndroidViewModel(app) {
 
@@ -39,15 +37,6 @@ class TunerViewModel(app: Application) : AndroidViewModel(app) {
 
     val amplitude: StateFlow<Float> = recorder.amplitude
 
-    // ── Smoothing ─────────────────────────────────────────────────────────────
-    // Exponential smoothing — smoothed in Hz; large jumps snap immediately.
-    private var smoothedHz = -1f
-    // Alpha: fraction of new reading blended in each frame.
-    // 0.2 is slightly smoother than the previous 0.25, reduces needle jitter.
-    private val alpha = 0.20f
-    // If new reading jumps more than this many cents, snap immediately (new note struck).
-    private val snapThresholdCents = 80f
-
     private val prefListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
         if (key == "reference_hz") {
             _referenceHz.value = prefs.getFloat("reference_hz", 440f)
@@ -66,23 +55,13 @@ class TunerViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private fun observePitch() {
+        // Smoothing/median filtering already happened in the audio pipeline (PitchFilter).
         viewModelScope.launch {
-            recorder.pitchHz.collectLatest { rawHz ->
-                if (rawHz <= 0f) {
-                    resetSmoothing()
+            recorder.pitchHz.collectLatest { hz ->
+                if (hz <= 0f) {
                     _tunerState.value = TunerState.Idle
                     return@collectLatest
                 }
-
-                val hz = if (smoothedHz <= 0f) {
-                    rawHz  // first reading — snap directly
-                } else {
-                    val centsDiff = abs(1200f * log2(rawHz / smoothedHz))
-                    if (centsDiff > snapThresholdCents) rawHz  // new note — snap
-                    else smoothedHz * (1f - alpha) + rawHz * alpha
-                }
-                smoothedHz = hz
-
                 val result = TuningAnalyzer.analyze(hz, _selectedTuning.value, _referenceHz.value)
                 _tunerState.value = TunerState.Detected(result)
             }
@@ -121,7 +100,7 @@ class TunerViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private fun resetSmoothing() {
-        smoothedHz = -1f
+        recorder.resetFilter()
     }
 
     override fun onCleared() {

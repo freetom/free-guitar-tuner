@@ -7,91 +7,97 @@ import kotlin.math.abs
  * Reference: de Cheveigné & Kawahara (2002), "YIN, a fundamental frequency estimator
  * for speech and music", JASA.
  *
- * Improvements over the naive implementation:
- *  - Tighter threshold (0.10) reduces false positives
- *  - Local minimum search: only accept a tau if it's a true local dip, not just
- *    the first crossing (avoids octave errors on rich harmonics)
- *  - Constrained tau search range to the instrument's frequency range (passed in)
- *  - Harmonic confirmation: before returning a candidate tau, its strongest
- *    sub-harmonic (tau/2) is checked; if the sub-harmonic also passes threshold
- *    we prefer it, correcting upward octave errors common with ukulele and
- *    guitar harmonics.
+ * Implementation notes:
+ *  - Operates on a float window; the whole window is used (the integration length is
+ *    `length - tauMax`, so every sample contributes).
+ *  - The DC offset (common on phone microphones) is removed before analysis.
+ *  - Float arithmetic in the O(W * tauMax) inner loop; only the running sums used for
+ *    normalisation are kept in double precision.
+ *  - Scratch buffers are reused between calls, so an instance is NOT thread safe.
+ *  - Tau search is constrained to the instrument's frequency range.
+ *  - First dip below the threshold wins (walked down to its local minimum).
+ *  - Octave check: if tau/2 (one octave up) also passes the threshold we prefer it.
  */
-object PitchDetector {
+class PitchDetector {
 
-    private const val YIN_THRESHOLD = 0.10f
+    companion object {
+        private const val YIN_THRESHOLD = 0.10f
+    }
+
+    private var cmnd = FloatArray(0)
+    private var work = FloatArray(0)
 
     /**
-     * Detect the fundamental frequency in [buffer].
+     * Detect the fundamental frequency in the first [length] samples of [buffer].
      *
-     * @param buffer     PCM 16-bit samples
+     * @param buffer     samples (any scale, 16-bit PCM scale is fine)
+     * @param length     number of valid samples in [buffer]
      * @param sampleRate Sampling rate in Hz (typically 44100)
      * @param minFreq    Lower bound of expected frequency range for the instrument
      * @param maxFreq    Upper bound of expected frequency range for the instrument
      * @return detected frequency in Hz, or -1f if no reliable pitch found
      */
     fun detect(
-        buffer: ShortArray,
+        buffer: FloatArray,
+        length: Int,
         sampleRate: Int,
         minFreq: Float = 60f,
         maxFreq: Float = 1400f
     ): Float {
-        val n = buffer.size / 2
-        if (n < 2) return -1f
+        if (length < 4) return -1f
 
+        // The integration window must stay at least as long as the largest lag.
         val tauMin = (sampleRate / maxFreq).toInt().coerceAtLeast(2)
-        val tauMax = (sampleRate / minFreq).toInt().coerceAtMost(n - 1)
+        val tauMax = (sampleRate / minFreq).toInt().coerceAtMost(length / 2)
+        if (tauMax <= tauMin + 1) return -1f
+        val w = length - tauMax
 
-        // Step 1 & 2: difference function + CMND in one pass
-        val cmnd = FloatArray(tauMax + 1)
+        if (work.size < length) work = FloatArray(length)
+        if (cmnd.size < tauMax + 1) cmnd = FloatArray(tauMax + 1)
+        val x = work
+        val cmnd = cmnd
+
+        // DC removal
+        var mean = 0.0
+        for (i in 0 until length) mean += buffer[i]
+        val m = (mean / length).toFloat()
+        for (i in 0 until length) x[i] = buffer[i] - m
+
+        // Step 1 & 2: difference function + cumulative mean normalised difference
         cmnd[0] = 1f
         var runningSum = 0.0
-
         for (tau in 1..tauMax) {
-            var sum = 0.0
-            for (j in 0 until n - tauMax) {   // fixed window avoids index OOB
-                val delta = buffer[j].toDouble() - buffer[j + tau].toDouble()
-                sum += delta * delta
+            var sum = 0f
+            for (j in 0 until w) {
+                val d = x[j] - x[j + tau]
+                sum += d * d
             }
             runningSum += sum
             cmnd[tau] = if (runningSum == 0.0) 1f
-                        else (sum * tau / runningSum).toFloat()
+                        else (sum.toDouble() * tau / runningSum).toFloat()
         }
 
-        // Step 3: find the best local minimum below threshold in the instrument range.
-        // Strategy: find ALL dips below threshold, pick the one with lowest CMND value.
-        // This avoids octave errors from picking the first (often wrong) crossing.
+        // Step 3: take the FIRST dip below the threshold (standard YIN) and walk to its
+        // bottom. Later dips are multiples of the period and are numerically equivalent,
+        // so picking the deepest one would select an arbitrary sub-octave.
         var bestTau = -1
-        var bestVal = Float.MAX_VALUE
-
         var tau = tauMin
         while (tau <= tauMax - 1) {
             if (cmnd[tau] < YIN_THRESHOLD) {
-                // Walk to the bottom of this dip
                 var t = tau
                 while (t + 1 <= tauMax && cmnd[t + 1] < cmnd[t]) t++
-                if (cmnd[t] < bestVal) {
-                    bestVal = cmnd[t]
-                    bestTau = t
-                }
-                tau = t + 1
-            } else {
-                tau++
+                bestTau = t
+                break
             }
+            tau++
         }
 
         if (bestTau != -1) {
-            // Harmonic confirmation: check if tau/2 (one octave up) also passes threshold.
-            // If so, prefer the sub-harmonic to correct upward-octave errors, common
-            // when detecting notes with strong second harmonics (ukulele, steel strings).
             val halfTau = bestTau / 2
-            if (halfTau >= tauMin && halfTau < cmnd.size && cmnd[halfTau] < YIN_THRESHOLD) {
-                // Refine the sub-harmonic candidate instead
-                val refined = parabolicInterp(cmnd, halfTau, tauMax)
-                return sampleRate / refined
+            if (halfTau >= tauMin && cmnd[halfTau] < YIN_THRESHOLD) {
+                return sampleRate / parabolicInterp(cmnd, halfTau, tauMax)
             }
-            val refined = parabolicInterp(cmnd, bestTau, tauMax)
-            return sampleRate / refined
+            return sampleRate / parabolicInterp(cmnd, bestTau, tauMax)
         }
 
         // Fallback: global minimum in range if confidence is reasonable
