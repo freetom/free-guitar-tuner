@@ -16,13 +16,27 @@ import kotlin.math.abs
  *  - Scratch buffers are reused between calls, so an instance is NOT thread safe.
  *  - Tau search is constrained to the instrument's frequency range.
  *  - First dip below the threshold wins (walked down to its local minimum).
- *  - Octave check: if tau/2 (one octave up) also passes the threshold we prefer it.
+ *  - Octave check: a strong 2nd harmonic can create a false first dip at half the true
+ *    period. If the neighbourhood of 2*tau (+-[OCTAVE_SEARCH] samples) is clearly deeper
+ *    than the chosen dip (by [OCTAVE_MARGIN]) the longer period is used instead. On a
+ *    clean periodic signal all multiples of the period are equally deep, so the margin
+ *    keeps the shorter (correct) period.
+ *  - [clarity] (1 - CMND at the chosen lag, 0..1) is exposed after every call so callers
+ *    can gate on confidence.
  */
 class PitchDetector {
 
     companion object {
         private const val YIN_THRESHOLD = 0.10f
+        private const val FALLBACK_THRESHOLD = 0.35f
+        private const val OCTAVE_MARGIN = 0.03f
+        private const val OCTAVE_SEARCH = 2
+        private const val HALF_RELAXED_THRESHOLD = 0.20f
     }
+
+    /** Clarity (0..1) of the last [detect] result; 0 when nothing was detected. */
+    var clarity: Float = 0f
+        private set
 
     private var cmnd = FloatArray(0)
     private var work = FloatArray(0)
@@ -44,6 +58,7 @@ class PitchDetector {
         minFreq: Float = 60f,
         maxFreq: Float = 1400f
     ): Float {
+        clarity = 0f
         if (length < 4) return -1f
 
         // The integration window must stay at least as long as the largest lag.
@@ -93,10 +108,28 @@ class PitchDetector {
         }
 
         if (bestTau != -1) {
-            val halfTau = bestTau / 2
-            if (halfTau >= tauMin && cmnd[halfTau] < YIN_THRESHOLD) {
-                return sampleRate / parabolicInterp(cmnd, halfTau, tauMax)
+            // Octave check: is the period at ~2*tau clearly better than this dip?
+            val twice = bestTau * 2
+            if (twice + OCTAVE_SEARCH < tauMax) {
+                var t2 = twice - OCTAVE_SEARCH
+                for (t in twice - OCTAVE_SEARCH..twice + OCTAVE_SEARCH) if (cmnd[t] < cmnd[t2]) t2 = t
+                if (cmnd[t2] < YIN_THRESHOLD && cmnd[t2] < cmnd[bestTau] - OCTAVE_MARGIN) {
+                    while (t2 + 1 <= tauMax && cmnd[t2 + 1] < cmnd[t2]) t2++
+                    while (t2 - 1 >= tauMin && cmnd[t2 - 1] < cmnd[t2]) t2--
+                    bestTau = t2
+                }
             }
+            // Sub-octave guard: the true period may have just missed the threshold while a
+            // multiple of it passed. Look around tau/2 with a relaxed threshold.
+            val half = bestTau / 2
+            if (half - OCTAVE_SEARCH >= tauMin) {
+                var h = half - OCTAVE_SEARCH
+                for (t in half - OCTAVE_SEARCH..half + OCTAVE_SEARCH) if (cmnd[t] < cmnd[h]) h = t
+                if (cmnd[h] < HALF_RELAXED_THRESHOLD && cmnd[h] <= cmnd[bestTau] + OCTAVE_MARGIN) {
+                    bestTau = h
+                }
+            }
+            clarity = (1f - cmnd[bestTau]).coerceIn(0f, 1f)
             return sampleRate / parabolicInterp(cmnd, bestTau, tauMax)
         }
 
@@ -106,7 +139,9 @@ class PitchDetector {
         for (t in tauMin..tauMax) {
             if (cmnd[t] < minVal) { minVal = cmnd[t]; minTau = t }
         }
-        return if (minVal < 0.35f) sampleRate / parabolicInterp(cmnd, minTau, tauMax) else -1f
+        if (minVal >= FALLBACK_THRESHOLD) return -1f
+        clarity = (1f - minVal).coerceIn(0f, 1f)
+        return sampleRate / parabolicInterp(cmnd, minTau, tauMax)
     }
 
     private fun parabolicInterp(array: FloatArray, tau: Int, max: Int): Float {

@@ -11,7 +11,8 @@ import kotlinx.coroutines.flow.StateFlow
  *
  * This class is only the Android I/O shell: it reads [PitchTracker.HOP_SAMPLES]
  * (1024 samples, ~23 ms) at a time and hands them to a [PitchTracker], which performs
- * the sliding-window analysis and filtering. Result: ~43 pitch updates per second.
+ * the sliding-window analysis, clarity gating, filtering and dropout hold.
+ * Result: ~43 pitch updates per second.
  */
 class AudioRecorder {
 

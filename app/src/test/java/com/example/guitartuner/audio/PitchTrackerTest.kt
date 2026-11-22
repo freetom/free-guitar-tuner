@@ -181,4 +181,97 @@ class PitchTrackerTest {
         }
         assertEquals(0.0, cents(last, 110.0), 1.0)
     }
+
+    // ── Steps 4/5 ─────────────────────────────────────────────────────────────
+
+    private fun noise(n: Int, amp: Double, rnd: java.util.Random) =
+        ShortArray(n) { (rnd.nextGaussian() * amp).toInt().toShort() }
+
+    @Test
+    fun loudNoiseIsRejectedByClarityGate() {
+        val tr = PitchTracker(sr)
+        val run = Run(tr, sr)
+        val rnd = java.util.Random(1)
+        var accepted = 0
+        repeat(60) { if (run.push(noise(hop, 3000.0, rnd)).hz > 0) accepted++ }
+        // white noise is loud enough to pass the level gate but has no periodicity
+        assertTrue("accepted $accepted of 60 noise frames", accepted <= 3)
+    }
+
+    @Test
+    fun holdsLastPitchThenDrops() {
+        val tr = PitchTracker(sr)
+        val run = Run(tr, sr)
+        val synth = Synth(sr, doubleArrayOf(1.0, 0.5))
+        repeat(20) { run.push(synth.next(hop, 110.0)) }
+        val rnd = java.util.Random(2)
+        // loud noise: rejected by clarity, level still high -> hold (~250 ms = ~10 hops)
+        // (the window still contains some tone for the first hops, so skip those)
+        var heldFrames = 0
+        var dropped = -1
+        for (i in 1..40) {
+            val fr = run.push(noise(hop, 3000.0, rnd))
+            if (fr.hz > 0) { if (fr.held) heldFrames++ }
+            else { dropped = i; break }
+        }
+        println("held frames: $heldFrames, dropped at hop $dropped")
+        assertTrue("never dropped", dropped > 0)
+        assertTrue("held too long: $dropped hops", dropped <= 20)
+    }
+
+    @Test
+    fun decayingNoteIsFollowedDownToReleaseLevel() {
+        val tr = PitchTracker(sr)
+        val run = Run(tr, sr)
+        val synth = Synth(sr, doubleArrayOf(1.0, 0.5))
+        repeat(20) { run.push(synth.next(hop, 110.0)) }
+        // amplitude such that rms is ~90: below start floor (120) but above release (60)
+        var last = PitchTracker.Frame(0f, -1f)
+        repeat(20) { last = run.push(synth.next(hop, 110.0, amp = 110.0)) }
+        assertTrue("rms=${last.rms}", last.rms in 60f..120f)
+        assertTrue("lost the note while decaying", last.hz > 0)
+        assertEquals(0.0, cents(last.hz, 110.0), 1.5)
+    }
+
+    @Test
+    fun quietNoteDoesNotStartDetection() {
+        val tr = PitchTracker(sr)
+        val run = Run(tr, sr)
+        val synth = Synth(sr, doubleArrayOf(1.0, 0.5))
+        repeat(20) { assertEquals(-1f, run.push(synth.next(hop, 110.0, amp = 110.0)).hz, 0f) }
+    }
+
+    @Test
+    fun octaveRobustnessSweep() {
+        // many harmonic mixes, incl. very weak / missing fundamental, across the range
+        val mixes = listOf(
+            doubleArrayOf(1.0, 0.3, 0.1),
+            doubleArrayOf(0.4, 1.0, 0.6, 0.3),
+            doubleArrayOf(0.2, 1.0, 0.8, 0.5, 0.3),
+            doubleArrayOf(1.0, 1.0, 0.7, 0.5, 0.3, 0.2)
+        )
+        var bad = 0; var total = 0
+        for (m in mixes) for (f in listOf(82.41, 98.0, 110.0, 130.81, 164.81, 196.0, 220.0, 293.66, 329.63, 392.0)) {
+            total++
+            val hz = detectSteady(f, m, 60f, 1400f)
+            if (hz <= 0 || abs(cents(hz, f)) > 5.0) {
+                bad++
+                println("octave sweep miss: f=$f mix=${m.toList()} -> $hz")
+            }
+        }
+        assertTrue("$bad of $total wrong", bad == 0)
+    }
+
+    @Test
+    fun clarityIsHighForCleanToneAndLowForNoise() {
+        val d = PitchDetector()
+        val synth = Synth(sr, doubleArrayOf(1.0, 0.5))
+        val tone = synth.next(3072, 196.0).let { s -> FloatArray(s.size) { s[it].toFloat() } }
+        assertTrue(d.detect(tone, tone.size, sr, 60f, 1400f) > 0)
+        assertTrue("clarity ${d.clarity}", d.clarity > 0.9f)
+        val rnd = java.util.Random(3)
+        val n = FloatArray(3072) { (rnd.nextGaussian() * 3000).toFloat() }
+        d.detect(n, n.size, sr, 60f, 1400f)
+        assertTrue("noise clarity ${d.clarity}", d.clarity < 0.7f)
+    }
 }

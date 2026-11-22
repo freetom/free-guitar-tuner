@@ -60,24 +60,28 @@ A bloatware-free, offline chromatic tuner for Android supporting **Guitar** and 
 ### Pitch Detection
 - Algorithm: **YIN** (de Cheveigné & Kawahara, 2002)
 - Sample rate: 44100 Hz mono PCM
-- Buffer: 8192 samples (~185 ms) — covers ~15 full cycles of low E2 (82 Hz)
+- Sliding-window analysis: a 3072-sample window (~70 ms) is analysed every 1024 samples (~23 ms), i.e. **~43 readings per second**
 - Detection range: instrument-dependent (60–1400 Hz for guitar, 130–1600 Hz for ukulele)
-- **Harmonic confirmation**: tau/2 octave-up check reduces upward-octave errors common on ukulele high strings
-- **Median filter** (7-frame window) rejects outlier readings
-- **Exponential smoothing** (α = 0.20) in the UI layer damps rapid fluctuations; large jumps (>80 cents) snap immediately for fast note response
+- **Octave-error handling**: first YIN dip wins, then 2×tau and tau/2 neighbourhoods are checked so weak-fundamental notes are not reported an octave off
+- **Clarity gating**: readings with YIN clarity below 0.70 (noise, chords, transients) are rejected; the last good pitch is held for 250 ms across dropouts
+- **Noise gate with hysteresis**: starts at RMS 120, keeps following a decaying note down to RMS 60
+- **Time-based filter** (cents domain): short median (5) + one-pole smoother (τ = 100 ms), and a new note is locked in after two agreeing readings (~90 ms)
+- Needle animation is time-based (τ = 50 ms), independent of display refresh rate
 
 ### Architecture
 ```
 app/src/main/java/com/example/guitartuner/
 ├── audio/
-│   ├── AudioRecorder.kt      — microphone capture, median filter, noise gate
-│   └── PitchDetector.kt      — YIN algorithm, dynamic frequency range
+│   ├── AudioRecorder.kt      — microphone capture (Android I/O only)
+│   ├── PitchTracker.kt       — sliding window, gates, clarity, dropout hold
+│   ├── PitchDetector.kt      — YIN algorithm, octave check, clarity
+│   └── PitchFilter.kt        — time-based median + smoothing, jump confirmation
 ├── tuning/
 │   ├── Tuning.kt             — Tuning + Instrument models, all tuning definitions
 │   └── TuningAnalyzer.kt     — maps detected Hz to closest string + cents deviation
 ├── ui/
 │   ├── MainActivity.kt       — instrument/tuning spinners, dynamic string indicators
-│   ├── TunerViewModel.kt     — instrument selection, pitch smoothing, state management
+│   ├── TunerViewModel.kt     — instrument selection, state management
 │   └── TuningMeterView.kt    — custom Canvas-drawn analog meter
 └── settings/
     └── SettingsActivity.kt   — reference pitch configuration

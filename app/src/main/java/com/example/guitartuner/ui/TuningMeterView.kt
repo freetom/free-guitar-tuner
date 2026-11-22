@@ -21,11 +21,12 @@ class TuningMeterView @JvmOverloads constructor(
     private var cents: Float = 0f
     private var idle: Boolean = true
 
-    // Animated display cents (smoothed)
-    // The ViewModel already smooths the pitch reading; this is just for visual
-    // needle animation — slow enough to be readable, fast enough to feel live.
+    // Animated display cents. The audio pipeline already filters the pitch; this only
+    // interpolates between readings (~43/s) so the needle moves fluidly.
+    // Time-based (not per-frame) so the feel is identical at 60/90/120 Hz displays.
     private var displayCents: Float = 0f
-    private val smoothingFactor = 0.15f  // lower = slower/smoother needle
+    private val needleTauSeconds = 0.05f   // lower = snappier needle
+    private var lastFrameNanos = 0L
 
     private val paintBg = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.parseColor("#1E1E2E")
@@ -94,8 +95,13 @@ class TuningMeterView @JvmOverloads constructor(
         canvas.drawArc(rectF, startAngle, sweepAngle, false, paintTrack)
 
         if (!idle) {
-            // Smooth animation
-            displayCents += (cents - displayCents) * smoothingFactor
+            // Smooth animation, frame-rate independent
+            val now = System.nanoTime()
+            val dt = if (lastFrameNanos == 0L) 0f
+                     else ((now - lastFrameNanos) / 1e9f).coerceIn(0f, 0.1f)
+            lastFrameNanos = now
+            val a = 1f - Math.exp((-dt / needleTauSeconds).toDouble()).toFloat()
+            displayCents += (cents - displayCents) * a
 
             // Draw active arc from center to current position
             val centerAngle = startAngle + sweepAngle / 2f  // 270° = bottom
@@ -126,10 +132,12 @@ class TuningMeterView @JvmOverloads constructor(
             paintNeedle.color = Color.WHITE
             canvas.drawCircle(cx, cy, 10f, paintNeedle)
 
-            // Keep animating if not settled
-            if (abs(displayCents - cents) > 0.5f) invalidate()
+            // Keep animating (on the next vsync) until settled
+            if (abs(displayCents - cents) > 0.1f) postInvalidateOnAnimation()
+            else lastFrameNanos = 0L
         } else {
             displayCents = 0f
+            lastFrameNanos = 0L
             // Just draw center dot
             canvas.drawCircle(cx, cy, 10f, paintNeedle)
         }
